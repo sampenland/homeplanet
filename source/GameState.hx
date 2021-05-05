@@ -21,7 +21,7 @@ class GameState extends FlxState
 	public static var player:Player;
 
 	private var planets:Array<FlxNapeSprite>;
-	private var onPlanet:Map<Int, Array<FlxNapeSprite>>;
+	private var onPlanet:Map<Int, Array<PlanetObject>>;
 
 	override public function create()
 	{
@@ -39,17 +39,17 @@ class GameState extends FlxState
 	private function setup()
 	{
 		planets = new Array<FlxNapeSprite>();
-		onPlanet = new Map<Int, Array<FlxNapeSprite>>();
+		onPlanet = new Map<Int, Array<PlanetObject>>();
 
 		for (p in 0...totalPlanets)
 		{
-			onPlanet[p] = new Array<FlxNapeSprite>();
+			onPlanet[p] = new Array<PlanetObject>();
 		}
 	}
 
 	private function createActors()
 	{
-		player = new Player(FlxG.width / 2, FlxG.height - 300);
+		player = new Player(FlxG.width / 2, FlxG.height - 300, planets[0]);
 		add(player);
 
 		onPlanet[0].push(player);
@@ -100,7 +100,8 @@ class GameState extends FlxState
 				force.muleq(elapsed);
 				obj.body.applyImpulse(force);
 
-				obj.angle = FlxAngle.angleBetween(obj, planets[planet], true) - 90;
+				var newAngle = FlxAngle.angleBetween(obj, planets[planet], true) - 90;
+				obj.angle = newAngle;
 			}
 		}
 	}

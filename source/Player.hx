@@ -3,17 +3,19 @@ package;
 import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.nape.FlxNapeSprite;
+import flixel.math.FlxAngle;
+import flixel.math.FlxVector;
 import nape.geom.Vec2;
 import nape.phys.BodyType;
 
-class Player extends FlxNapeSprite
+class Player extends PlanetObject
 {
 	private var sprite:FlxSprite;
-	private final moveSpeed:Int = 300;
+	private final moveSpeed:Int = 6000;
 
-	override public function new(x:Float, y:Float)
+	override public function new(x:Float, y:Float, onPlanetR:FlxNapeSprite)
 	{
-		super(x, y);
+		super(x, y, onPlanetR);
 
 		sprite = new FlxSprite();
 		sprite.loadGraphic(AssetPaths.player__png, true, 12, 12);
@@ -24,44 +26,52 @@ class Player extends FlxNapeSprite
 		animation.play("stand");
 
 		createCircularBody(10);
-		setBodyMaterial(0, 0, 0, 100);
+		setBodyMaterial(0, 0, 0, 150);
+		setDrag(0.95, 0.95);
 		body.type = BodyType.DYNAMIC;
 	}
 
 	private function keyboardControls(elapsed:Float)
 	{
-		if (FlxG.keys.anyPressed([A, LEFT]))
-		{
-			move(-1, elapsed);
-		}
-		else if (FlxG.keys.anyPressed([D, RIGHT]))
-		{
-			move(1, elapsed);
-		}
-	}
+		var impulse = FlxVector.get(onPlanet.getMidpoint().x - getMidpoint().x, onPlanet.getMidpoint().y - getMidpoint().y).normalize();
+		var impulseVector = FlxVector.get().copyFrom(impulse);
 
-	private function move(dir:Int, elapsed:Float)
-	{
-		flipX = dir < 0;
-		body.applyImpulse(new Vec2(dir * moveSpeed * elapsed, 0));
-	}
+		var left = FlxG.keys.anyPressed([A, LEFT]);
+		var right = FlxG.keys.anyPressed([D, RIGHT]);
 
-	private function updateSprite()
-	{
-		if (body.velocity.x > 0 || body.velocity.x < 0)
+		if (FlxG.keys.anyJustPressed([A, LEFT]))
 		{
-			animation.play("run");
+			flipX = true;
 		}
-		else
+		else if (FlxG.keys.anyJustPressed([D, RIGHT]))
+		{
+			flipX = false;
+		}
+
+		if (!left && !right)
 		{
 			animation.play("stand");
+			return;
 		}
+
+		animation.play("run");
+
+		if (left)
+		{
+			impulseVector.degrees += 90;
+		}
+		else if (right)
+		{
+			impulseVector.degrees -= 90;
+		}
+
+		impulseVector.length = moveSpeed * elapsed;
+		body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
 	}
 
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
 		keyboardControls(elapsed);
-		updateSprite();
 	}
 }
