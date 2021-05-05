@@ -6,14 +6,14 @@ class PlanetObject extends FlxNapeSprite
 {
 	private var onPlanet:FlxNapeSprite;
 
-	override public function new(x:Float, y:Float, onPlanetR:FlxNapeSprite)
+	override public function new(x:Float, y:Float, onPlanetR:Planet)
 	{
 		super(x, y);
 
 		onPlanet = onPlanetR;
 	}
 
-	public function setOnPlanet(oP:FlxNapeSprite)
+	public function setOnPlanet(oP:Planet)
 	{
 		onPlanet = oP;
 	}

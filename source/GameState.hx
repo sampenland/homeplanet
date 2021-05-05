@@ -20,8 +20,9 @@ class GameState extends FlxState
 
 	public static var player:Player;
 
-	private var planets:Array<FlxNapeSprite>;
+	private var planets:Array<Planet>;
 	private var onPlanet:Map<Int, Array<PlanetObject>>;
+	private var planetIdx:Map<Planet, Int>;
 
 	override public function create()
 	{
@@ -38,8 +39,9 @@ class GameState extends FlxState
 
 	private function setup()
 	{
-		planets = new Array<FlxNapeSprite>();
+		planets = new Array<Planet>();
 		onPlanet = new Map<Int, Array<PlanetObject>>();
+		planetIdx = new Map<Planet, Int>();
 
 		for (p in 0...totalPlanets)
 		{
@@ -69,18 +71,40 @@ class GameState extends FlxState
 
 		FlxNapeSpace.createWalls();
 
+		var startPlanet = createPlanet(20, FlxG.width / 2, FlxG.height - 260);
+		createPlanetVeg(startPlanet, 12);
+	}
+
+	private function createPlanetVeg(planet:Planet, vegCount:Int)
+	{
+		for (_ in 0...vegCount)
+		{
+			var rx = FlxG.random.float(planet.x, planet.x + planet.width);
+			var ry = if (FlxG.random.int(0, 10) < 5) planet.y else planet.y + planet.height;
+
+			var bush = new PlanetObject(rx, ry, planet);
+			add(bush);
+			onPlanet[planetIdx[planet]].push(bush);
+		}
+	}
+
+	private function createPlanet(bodySize:Int, x:Float, y:Float)
+	{
 		var planetDisplay = new FlxSprite();
 		planetDisplay.loadGraphic(AssetPaths.planet__png, false, 50, 50);
 
-		var startPlanet = new FlxNapeSprite(planetDisplay.x, planetDisplay.y);
-		startPlanet.setPosition(FlxG.width / 2, FlxG.height - 260);
-		startPlanet.loadGraphicFromSprite(planetDisplay);
-		startPlanet.createCircularBody(20);
-		startPlanet.setBodyMaterial(0, 0, 0, 100);
-		startPlanet.body.type = BodyType.STATIC;
-		startPlanet.body.mass = Std.int(10e5);
-		add(startPlanet);
-		planets.push(startPlanet);
+		var planet = new Planet(planetDisplay.x, planetDisplay.y, bodySize);
+		planet.setPosition(x, y);
+		planet.loadGraphicFromSprite(planetDisplay);
+		planet.createCircularBody(bodySize);
+		planet.setBodyMaterial(0, 0, 0, 100);
+		planet.body.type = BodyType.STATIC;
+		planet.body.mass = Std.int(10e5);
+		add(planet);
+		planets.push(planet);
+		planetIdx[planet] = planets.length - 1;
+
+		return planet;
 	}
 
 	private function planetGravity(elapsed:Float)

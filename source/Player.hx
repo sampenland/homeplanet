@@ -2,8 +2,6 @@ package;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
-import flixel.addons.nape.FlxNapeSprite;
-import flixel.math.FlxAngle;
 import flixel.math.FlxVector;
 import nape.geom.Vec2;
 import nape.phys.BodyType;
@@ -13,7 +11,7 @@ class Player extends PlanetObject
 	private var sprite:FlxSprite;
 	private final moveSpeed:Int = 6000;
 
-	override public function new(x:Float, y:Float, onPlanetR:FlxNapeSprite)
+	override public function new(x:Float, y:Float, onPlanetR:Planet)
 	{
 		super(x, y, onPlanetR);
 
@@ -33,6 +31,9 @@ class Player extends PlanetObject
 
 	private function keyboardControls(elapsed:Float)
 	{
+		if (onPlanet == null)
+			return;
+
 		var impulse = FlxVector.get(onPlanet.getMidpoint().x - getMidpoint().x, onPlanet.getMidpoint().y - getMidpoint().y).normalize();
 		var impulseVector = FlxVector.get().copyFrom(impulse);
 
