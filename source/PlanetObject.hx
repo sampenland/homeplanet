@@ -20,5 +20,6 @@ class PlanetObject extends FlxNapeSprite
 			return;
 
 		onPlanet = oP;
+		onPlanet.alive = true;
 	}
 }

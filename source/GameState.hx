@@ -11,7 +11,7 @@ import nape.phys.BodyType;
 
 class GameState extends FlxState
 {
-	private final totalPlanets:Int = 3;
+	private final totalPlanets:Int = 30;
 	private final maxSpacingBetweenPlanets:Int = 250;
 	private final minPlanetSize:Int = 80;
 	private final maxPlanetSize:Int = 100;
@@ -100,12 +100,8 @@ class GameState extends FlxState
 	{
 		for (_ in 0...vegCount)
 		{
-			var rx = FlxG.random.int(Std.int(planet.planet.x - planet.planet.width * 2), Std.int(planet.planet.x + planet.planet.width) * 2);
-			var ry = if (FlxG.random.int(0, 10) < 5) planet.planet.y - planet.planet.height else planet.planet.y + planet.planet.height;
-
-			var bush = new Bush(rx, ry, planet);
+			var bush = new Bush(planet);
 			add(bush);
-			onPlanet[planetIdx[planet]].push(bush);
 		}
 	}
 

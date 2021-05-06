@@ -28,6 +28,7 @@ class Player extends PlanetObject
 		loadGraphicFromSprite(sprite);
 		animation.add("stand", [0, 1], 5, true);
 		animation.add("run", [2, 3, 4, 5], 5, true);
+		animation.add("jump", [6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 20, false);
 		animation.play("stand");
 
 		createCircularBody(8);
@@ -44,13 +45,24 @@ class Player extends PlanetObject
 		if (onPlanet == null)
 			return;
 
+		kAttackControls(elapsed);
+		kMoveControls(elapsed);
+	}
+
+	private function kAttackControls(elapsed:Float)
+	{
+		if (FlxG.keys.anyJustPressed([SPACE])) {}
+	}
+
+	private function kMoveControls(elapsed:Float)
+	{
 		var impulse = FlxVector.get(onPlanet.planet.getMidpoint().x - getMidpoint().x, onPlanet.planet.getMidpoint().y - getMidpoint().y).normalize();
 		var impulseVector = FlxVector.get().copyFrom(impulse);
 		impulseVector.length = moveSpeed * elapsed;
 
 		var left = FlxG.keys.anyPressed([A, LEFT]);
 		var right = FlxG.keys.anyPressed([D, RIGHT]);
-		var jump = FlxG.keys.anyJustPressed([SPACE, UP]);
+		var jump = FlxG.keys.anyJustPressed([UP]);
 
 		if (FlxG.keys.anyJustPressed([A, LEFT]))
 		{
@@ -65,12 +77,14 @@ class Player extends PlanetObject
 		{
 			if (body.velocity.x < 1 && body.velocity.x > -1 || body.velocity.y < 1 && body.velocity.y > -1)
 			{
-				animation.play("stand");
+				if (canJump)
+					animation.play("stand");
 			}
 			return;
 		}
 
-		animation.play("run");
+		if (canJump)
+			animation.play("run");
 
 		if (left)
 		{
@@ -86,6 +100,7 @@ class Player extends PlanetObject
 		if (jump && canJump)
 		{
 			canJump = false;
+			animation.play("jump");
 			FlxTween.tween(FlxG.camera, {zoom: 3.5}, 0.25, {onComplete: finishJump});
 
 			var upVector:FlxVector = getMidpoint().subtractPoint(onPlanet.planet.getMidpoint(FlxPoint.weak()));

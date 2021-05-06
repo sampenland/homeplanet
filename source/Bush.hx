@@ -2,13 +2,17 @@ package;
 
 import flixel.FlxG;
 import flixel.FlxSprite;
-import nape.dynamics.InteractionFilter;
+import flixel.math.FlxVector;
 
-class Bush extends PlanetObject
+class Bush extends FlxSprite
 {
-	override public function new(x:Float, y:Float, onPlanetR:Planet)
+	private var onPlanet:Planet;
+
+	override public function new(onPlanetR:Planet)
 	{
-		super(x, y, onPlanetR);
+		super(0, 0);
+
+		onPlanet = onPlanetR;
 
 		var display = new FlxSprite();
 		display.loadGraphic(AssetPaths.bush__png, true, 12, 12);
@@ -17,11 +21,12 @@ class Bush extends PlanetObject
 		animation.add("idle", [0, 1], 3, true);
 		animation.play("idle");
 
-		createCircularBody(FlxG.random.int(6, 10));
-		setBodyMaterial(0, 0, 0, 150);
-		body.mass = 1;
+		var v = FlxVector.get(1, 1);
+		v.degrees = FlxG.random.float(0, 359);
+		angle = v.degrees - 180;
+		v.length = onPlanetR.radius;
 
-		var interaction = new InteractionFilter(2, ~2);
-		body.setShapeFilters(interaction);
+		x = onPlanet.planet.x + v.x;
+		y = onPlanet.planet.y + v.y;
 	}
 }
