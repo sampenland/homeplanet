@@ -15,6 +15,9 @@ class PlanetObject extends FlxNapeSprite
 
 	public function setOnPlanet(oP:Planet)
 	{
+		if (oP == onPlanet)
+			return;
+
 		onPlanet = oP;
 	}
 }

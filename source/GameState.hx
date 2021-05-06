@@ -11,7 +11,10 @@ import nape.phys.BodyType;
 
 class GameState extends FlxState
 {
-	private final totalPlanets:Int = 10;
+	private final totalPlanets:Int = 20;
+	private final maxSpacingBetweenPlanets:Int = 250;
+	private final minPlanetSize:Int = 18;
+	private final maxPlanetSize:Int = 120;
 
 	public static var player:Player;
 
@@ -22,8 +25,8 @@ class GameState extends FlxState
 	override public function create()
 	{
 		super.create();
-
-		FlxTween.tween(FlxG.camera, {zoom: 4}, 2);
+		FlxG.camera.zoom = 0.2;
+		FlxTween.tween(FlxG.camera, {zoom: 4}, 6);
 
 		setup();
 		createLevel();
@@ -68,18 +71,21 @@ class GameState extends FlxState
 		FlxNapeSpace.space.worldLinearDrag = 0;
 		FlxNapeSpace.space.gravity = new Vec2(0, 0);
 
-		FlxNapeSpace.createWalls(0, FlxG.height - totalPlanets * 100, FlxG.width, FlxG.height);
-
-		var stop:Int = totalPlanets * 100;
-		var p:Int = 0;
-		var step:Int = 50;
-		while (p < stop)
+		var cnt:Int = 0;
+		var lastX = FlxG.width / 2;
+		var startY = FlxG.height / 2;
+		while (cnt < totalPlanets)
 		{
-			var rx = FlxG.random.float(50, FlxG.width - 50);
-			var planet = createPlanet(20, rx, FlxG.height - (p * step));
-			createPlanetVeg(planet, 12);
+			var planetSize = FlxG.random.int(minPlanetSize, maxPlanetSize);
 
-			p += step;
+			var rx = lastX + (FlxG.random.int(0, Std.int(FlxG.width / 4)) * (if (FlxG.random.int(0, 10) < 5) 1 else -1));
+			lastX = rx;
+
+			var y = (startY - (cnt * (planetSize * 2) + (cnt * FlxG.random.int(120, maxSpacingBetweenPlanets))));
+			var planet = createPlanet(planetSize, rx, y);
+			createPlanetVeg(planet, FlxG.random.int(10, 20));
+
+			cnt += 1;
 		}
 	}
 
@@ -104,6 +110,10 @@ class GameState extends FlxState
 		var planet = new Planet(planetDisplay.x, planetDisplay.y, bodySize);
 		planet.setPosition(x, y);
 		planet.loadGraphicFromSprite(planetDisplay);
+
+		var neededScale = bodySize / 20;
+		planet.scale.set(neededScale, neededScale);
+
 		planet.createCircularBody(bodySize);
 		planet.setBodyMaterial(0, 0, 0, 100);
 		planet.body.type = BodyType.STATIC;
@@ -135,6 +145,26 @@ class GameState extends FlxState
 				var newAngle = FlxAngle.angleBetween(obj, planets[planet], true) - 90;
 				obj.angle = newAngle;
 			}
+		}
+	}
+
+	private function switchPlanets(elapsed:Float)
+	{
+		var closestPlanet:Planet = null;
+		var minDistance:Float = 99999;
+		for (planet in planets)
+		{
+			var distance = player.getMidpoint().distanceTo(planet.getMidpoint());
+			if (distance < minDistance)
+			{
+				closestPlanet = planet;
+				minDistance = distance;
+			}
+		}
+
+		if (closestPlanet != null)
+		{
+			player.setOnPlanet(closestPlanet);
 		}
 	}
 
