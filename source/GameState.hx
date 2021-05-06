@@ -1,16 +1,11 @@
 package;
 
 import flixel.FlxG;
-import flixel.FlxObject;
 import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.addons.nape.FlxNapeSpace;
-import flixel.addons.nape.FlxNapeSprite;
-import flixel.group.FlxGroup.FlxTypedGroup;
 import flixel.math.FlxAngle;
 import flixel.tweens.FlxTween;
-import flixel.util.FlxColor;
-import flixel.util.FlxSpriteUtil;
 import nape.geom.Vec2;
 import nape.phys.BodyType;
 
@@ -34,7 +29,7 @@ class GameState extends FlxState
 		createLevel();
 		createActors();
 
-		FlxNapeSpace.drawDebug = true;
+		// FlxNapeSpace.drawDebug = true;
 	}
 
 	private function setup()
@@ -79,10 +74,10 @@ class GameState extends FlxState
 	{
 		for (_ in 0...vegCount)
 		{
-			var rx = FlxG.random.float(planet.x, planet.x + planet.width);
-			var ry = if (FlxG.random.int(0, 10) < 5) planet.y else planet.y + planet.height;
+			var rx = FlxG.random.int(Std.int(planet.x - planet.width), Std.int(planet.x + planet.width));
+			var ry = if (FlxG.random.int(0, 10) < 5) planet.y - planet.height else planet.y + planet.height;
 
-			var bush = new PlanetObject(rx, ry, planet);
+			var bush = new Bush(rx, ry, planet);
 			add(bush);
 			onPlanet[planetIdx[planet]].push(bush);
 		}
@@ -113,9 +108,9 @@ class GameState extends FlxState
 		{
 			for (obj in onPlanet[planet])
 			{
-				var distance = planets[planet].getPosition().distanceTo(obj.getPosition());
+				var distance = planets[planet].getMidpoint().distanceTo(obj.getMidpoint());
 
-				var impulse = 10 * planets[planet].body.mass / (distance * distance);
+				var impulse = 9.8 * planets[planet].body.mass / (distance * distance);
 				var dx = planets[planet].getMidpoint().x - obj.getMidpoint().x;
 				var dy = planets[planet].getMidpoint().y - obj.getMidpoint().y;
 

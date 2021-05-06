@@ -1,7 +1,7 @@
 package;
 
 import flixel.FlxSprite;
-import nape.phys.BodyType;
+import nape.dynamics.InteractionFilter;
 
 class Bush extends PlanetObject
 {
@@ -18,5 +18,9 @@ class Bush extends PlanetObject
 
 		createCircularBody(10);
 		setBodyMaterial(0, 0, 0, 150);
+		body.mass = 1;
+
+		var interaction = new InteractionFilter(2, ~2);
+		body.setShapeFilters(interaction);
 	}
 }
