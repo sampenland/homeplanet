@@ -1,10 +1,11 @@
 package;
 
+import flixel.FlxSprite;
 import flixel.addons.nape.FlxNapeSprite;
 
 class PlanetObject extends FlxNapeSprite
 {
-	private var onPlanet:FlxNapeSprite;
+	private var onPlanet:Planet;
 
 	override public function new(x:Float, y:Float, onPlanetR:Planet)
 	{
@@ -15,7 +16,7 @@ class PlanetObject extends FlxNapeSprite
 
 	public function setOnPlanet(oP:Planet)
 	{
-		if (oP == onPlanet)
+		if (oP.planet == onPlanet.planet)
 			return;
 
 		onPlanet = oP;

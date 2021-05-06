@@ -12,9 +12,11 @@ import nape.phys.BodyType;
 class Player extends PlanetObject
 {
 	private var sprite:FlxSprite;
-	private final moveSpeed:Int = 6000;
-	private final jumpForce:Int = 6000;
+	private final moveSpeed:Int = 10000;
+	private final jumpForce:Int = 5000;
 	private var canJump:Bool = true;
+	private var zooming:Bool = false;
+	private var zoomed:Bool = true;
 
 	override public function new(x:Float, y:Float, onPlanetR:Planet)
 	{
@@ -28,7 +30,7 @@ class Player extends PlanetObject
 		animation.add("run", [2, 3, 4, 5], 5, true);
 		animation.play("stand");
 
-		createCircularBody(10);
+		createCircularBody(8);
 		setBodyMaterial(0, 0, 0, 150);
 		setDrag(0.95, 0.95);
 		body.type = BodyType.DYNAMIC;
@@ -42,7 +44,7 @@ class Player extends PlanetObject
 		if (onPlanet == null)
 			return;
 
-		var impulse = FlxVector.get(onPlanet.getMidpoint().x - getMidpoint().x, onPlanet.getMidpoint().y - getMidpoint().y).normalize();
+		var impulse = FlxVector.get(onPlanet.planet.getMidpoint().x - getMidpoint().x, onPlanet.planet.getMidpoint().y - getMidpoint().y).normalize();
 		var impulseVector = FlxVector.get().copyFrom(impulse);
 		impulseVector.length = moveSpeed * elapsed;
 
@@ -61,7 +63,10 @@ class Player extends PlanetObject
 
 		if (!left && !right && !jump)
 		{
-			animation.play("stand");
+			if (body.velocity.x < 1 && body.velocity.x > -1 || body.velocity.y < 1 && body.velocity.y > -1)
+			{
+				animation.play("stand");
+			}
 			return;
 		}
 
@@ -83,7 +88,7 @@ class Player extends PlanetObject
 			canJump = false;
 			FlxTween.tween(FlxG.camera, {zoom: 3.5}, 0.25, {onComplete: finishJump});
 
-			var upVector:FlxVector = getMidpoint().subtractPoint(onPlanet.getMidpoint(FlxPoint.weak()));
+			var upVector:FlxVector = getMidpoint().subtractPoint(onPlanet.planet.getMidpoint(FlxPoint.weak()));
 			upVector.length = 5 * jumpForce;
 			body.applyImpulse(new Vec2(upVector.x, upVector.y));
 		}
@@ -99,9 +104,38 @@ class Player extends PlanetObject
 		canJump = true;
 	}
 
+	private function resetZoom(_)
+	{
+		zooming = false;
+	}
+
+	private function zoomControls()
+	{
+		if (zooming)
+			return;
+
+		if (FlxG.keys.anyJustPressed([Z]))
+		{
+			zooming = true;
+			if (zoomed)
+			{
+				zoomed = false;
+				FlxTween.tween(FlxG.camera, {zoom: GameState.minZoom}, 1, {onComplete: resetZoom});
+				FlxG.camera.follow(null);
+			}
+			else
+			{
+				zoomed = true;
+				FlxTween.tween(FlxG.camera, {zoom: GameState.maxZoom}, 1, {onComplete: resetZoom});
+				FlxG.camera.follow(this, LOCKON, 0.05);
+			}
+		}
+	}
+
 	override function update(elapsed:Float)
 	{
 		super.update(elapsed);
 		keyboardControls(elapsed);
+		zoomControls();
 	}
 }

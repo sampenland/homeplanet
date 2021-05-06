@@ -1,5 +1,6 @@
 package;
 
+import flixel.FlxG;
 import flixel.FlxSprite;
 import nape.dynamics.InteractionFilter;
 
@@ -16,7 +17,7 @@ class Bush extends PlanetObject
 		animation.add("idle", [0, 1], 3, true);
 		animation.play("idle");
 
-		createCircularBody(10);
+		createCircularBody(FlxG.random.int(6, 10));
 		setBodyMaterial(0, 0, 0, 150);
 		body.mass = 1;
 
