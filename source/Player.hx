@@ -4,6 +4,7 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.math.FlxPoint;
 import flixel.math.FlxVector;
+import flixel.tweens.FlxTween;
 import nape.dynamics.InteractionFilter;
 import nape.geom.Vec2;
 import nape.phys.BodyType;
@@ -13,6 +14,7 @@ class Player extends PlanetObject
 	private var sprite:FlxSprite;
 	private final moveSpeed:Int = 6000;
 	private final jumpForce:Int = 6000;
+	private var canJump:Bool = true;
 
 	override public function new(x:Float, y:Float, onPlanetR:Planet)
 	{
@@ -76,12 +78,25 @@ class Player extends PlanetObject
 			body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
 		}
 
-		if (jump)
+		if (jump && canJump)
 		{
+			canJump = false;
+			FlxTween.tween(FlxG.camera, {zoom: 3.5}, 0.25, {onComplete: finishJump});
+
 			var upVector:FlxVector = getMidpoint().subtractPoint(onPlanet.getMidpoint(FlxPoint.weak()));
 			upVector.length = 5 * jumpForce;
 			body.applyImpulse(new Vec2(upVector.x, upVector.y));
 		}
+	}
+
+	private function finishJump(_)
+	{
+		FlxTween.tween(FlxG.camera, {zoom: 4}, 0.25, {onComplete: resetJump});
+	}
+
+	private function resetJump(_)
+	{
+		canJump = true;
 	}
 
 	override function update(elapsed:Float)

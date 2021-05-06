@@ -23,7 +23,7 @@ class GameState extends FlxState
 	{
 		super.create();
 
-		FlxTween.tween(FlxG.camera, {zoom: 3}, 2);
+		FlxTween.tween(FlxG.camera, {zoom: 4}, 2);
 
 		setup();
 		createLevel();
@@ -46,8 +46,12 @@ class GameState extends FlxState
 
 	private function createActors()
 	{
-		player = new Player(FlxG.width / 2, FlxG.height - 300, planets[0]);
+		var px = planets[0].x + planets[0].width / 2;
+		var py = planets[0].y - 20;
+
+		player = new Player(px, py, planets[0]);
 		add(player);
+		FlxG.camera.follow(player, LOCKON, 0.05);
 
 		onPlanet[0].push(player);
 	}
@@ -64,10 +68,19 @@ class GameState extends FlxState
 		FlxNapeSpace.space.worldLinearDrag = 0;
 		FlxNapeSpace.space.gravity = new Vec2(0, 0);
 
-		FlxNapeSpace.createWalls();
+		FlxNapeSpace.createWalls(0, FlxG.height - totalPlanets * 100, FlxG.width, FlxG.height);
 
-		var startPlanet = createPlanet(20, FlxG.width / 2, FlxG.height - 260);
-		createPlanetVeg(startPlanet, 12);
+		var stop:Int = totalPlanets * 100;
+		var p:Int = 0;
+		var step:Int = 50;
+		while (p < stop)
+		{
+			var rx = FlxG.random.float(50, FlxG.width - 50);
+			var planet = createPlanet(20, rx, FlxG.height - (p * step));
+			createPlanetVeg(planet, 12);
+
+			p += step;
+		}
 	}
 
 	private function createPlanetVeg(planet:Planet, vegCount:Int)
