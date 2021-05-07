@@ -4,7 +4,10 @@ import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.nape.FlxNapeSprite;
 import flixel.group.FlxGroup.FlxTypedGroup;
+import flixel.math.FlxPoint;
 import flixel.math.FlxVector;
+import flixel.tweens.FlxTween;
+import nape.geom.Vec2;
 import nape.phys.BodyType;
 
 class Planet extends FlxTypedGroup<FlxSprite>
@@ -14,19 +17,21 @@ class Planet extends FlxTypedGroup<FlxSprite>
 
 	private var planetFlag:FlxSprite;
 
-	public var isBlackHole:Bool;
-
+	public var isSun:Bool;
 	public var radius:Float;
 
-	override public function new(x:Float, y:Float, bodySize:Int, vegCnt:Int, ?blackHole:Bool)
+	public var revSpeed:Float = 0;
+
+	override public function new(x:Float, y:Float, bodySize:Int, vegCnt:Int, ?sun:Bool)
 	{
 		super();
 
-		isBlackHole = blackHole;
+		isSun = sun;
+
 		var neededScale = bodySize / 46;
 		radius = bodySize;
 
-		if (!blackHole)
+		if (!sun)
 		{
 			planetFlag = new FlxSprite();
 			planetFlag.loadGraphic(AssetPaths.flag__png, true, 12, 64);
@@ -40,13 +45,13 @@ class Planet extends FlxTypedGroup<FlxSprite>
 		}
 
 		planetDisplay = new FlxSprite();
-		if (blackHole)
+		if (sun)
 		{
-			planetDisplay.loadGraphic(AssetPaths.blackHole__png, true, 100, 100);
+			planetDisplay.loadGraphic(AssetPaths.sun__png, false, 200, 200);
 		}
 		else
 		{
-			planetDisplay.loadGraphic(AssetPaths.planet__png, true, 100, 100);
+			planetDisplay.loadGraphic(AssetPaths.planet__png, false, 100, 100);
 		}
 
 		planet = new FlxNapeSprite(x, y);
@@ -58,7 +63,7 @@ class Planet extends FlxTypedGroup<FlxSprite>
 		planet.body.mass = Std.int(10e5);
 		add(planet);
 
-		if (!blackHole)
+		if (!sun)
 		{
 			for (_ in 0...vegCnt)
 			{
@@ -79,11 +84,21 @@ class Planet extends FlxTypedGroup<FlxSprite>
 				v.put();
 			}
 		}
+
+		if (isSun)
+			return;
+
+		revSpeed = FlxG.random.float(GameState.minRevSpeed, GameState.maxRevSpeed);
+	}
+
+	override function update(elapsed:Float)
+	{
+		super.update(elapsed);
 	}
 
 	public function raiseFlag()
 	{
-		if (isBlackHole)
+		if (isSun)
 			return;
 
 		planetFlag.animation.play("rise");

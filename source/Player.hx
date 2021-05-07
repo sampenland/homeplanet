@@ -15,12 +15,14 @@ class Player extends PlanetObject
 	private final moveSpeed:Int = 10000;
 	private final jumpForce:Int = 5000;
 	private var canJump:Bool = true;
-	private var zooming:Bool = false;
+
+	public var zooming:Bool = false;
+
 	private var zoomed:Bool = true;
 
-	override public function new(x:Float, y:Float, onPlanetR:Planet)
+	override public function new(x:Float, y:Float)
 	{
-		super(x, y, onPlanetR);
+		super(x, y);
 
 		sprite = new FlxSprite();
 		sprite.loadGraphic(AssetPaths.player__png, true, 12, 12);
@@ -42,31 +44,18 @@ class Player extends PlanetObject
 
 	private function keyboardControls(elapsed:Float)
 	{
-		if (onPlanet == null)
-			return;
-
-		kAttackControls(elapsed);
 		kMoveControls(elapsed);
-	}
-
-	private function kAttackControls(elapsed:Float)
-	{
-		if (FlxG.keys.anyJustPressed([SPACE])) {}
 	}
 
 	private function kMoveControls(elapsed:Float)
 	{
-		var impulse = FlxVector.get(onPlanet.planet.getMidpoint().x - getMidpoint().x, onPlanet.planet.getMidpoint().y - getMidpoint().y).normalize();
-		var impulseVector = FlxVector.get().copyFrom(impulse);
-		impulseVector.length = moveSpeed * elapsed;
-
 		var left = FlxG.keys.anyPressed([A, LEFT]);
 		var right = FlxG.keys.anyPressed([D, RIGHT]);
 		var up = FlxG.keys.anyJustPressed([UP, W]);
 		var fly = FlxG.keys.anyPressed([SPACE]);
 		var down = FlxG.keys.anyPressed([DOWN, S]);
 
-		if (onPlanet.isBlackHole)
+		if (onPlanet == null)
 		{
 			var impulseThrustVector = FlxVector.get(1, 1);
 			impulseThrustVector.length = 0.025 * jumpForce;
@@ -96,6 +85,10 @@ class Player extends PlanetObject
 			impulseThrustVector.put();
 			return;
 		}
+
+		var impulse = FlxVector.get(onPlanet.planet.getMidpoint().x - getMidpoint().x, onPlanet.planet.getMidpoint().y - getMidpoint().y).normalize();
+		var impulseVector = FlxVector.get().copyFrom(impulse);
+		impulseVector.length = moveSpeed * elapsed;
 
 		if (FlxG.keys.anyJustPressed([A, LEFT]))
 		{
@@ -139,18 +132,6 @@ class Player extends PlanetObject
 		{
 			animation.play("stand");
 			upVector.length = 0.25 * jumpForce;
-
-			if (onPlanet.isBlackHole)
-			{
-				upVector.degrees += 180;
-			}
-
-			body.applyImpulse(new Vec2(upVector.x, upVector.y));
-		}
-
-		if (onPlanet.isBlackHole && up && !fly)
-		{
-			upVector.length = 0.25 * jumpForce;
 			body.applyImpulse(new Vec2(upVector.x, upVector.y));
 		}
 
@@ -162,7 +143,7 @@ class Player extends PlanetObject
 				animation.play("jump");
 				FlxTween.tween(FlxG.camera, {zoom: 3.5}, 0.25, {onComplete: finishJump});
 
-				upVector.length = 5 * jumpForce;
+				upVector.length = (onPlanet.planet.mass * 2.25) * jumpForce;
 				body.applyImpulse(new Vec2(upVector.x, upVector.y));
 			}
 		}
@@ -197,13 +178,12 @@ class Player extends PlanetObject
 			{
 				zoomed = false;
 				FlxTween.tween(FlxG.camera, {zoom: GameState.minZoom}, 1, {onComplete: resetZoom});
-				FlxG.camera.follow(null);
 			}
 			else
 			{
 				zoomed = true;
-				FlxTween.tween(FlxG.camera, {zoom: GameState.maxZoom}, 1, {onComplete: resetZoom});
 				FlxG.camera.follow(this, LOCKON, 0.05);
+				FlxTween.tween(FlxG.camera, {zoom: GameState.maxZoom}, 1, {onComplete: resetZoom});
 			}
 		}
 	}

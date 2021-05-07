@@ -6,39 +6,48 @@ import flixel.FlxState;
 import flixel.addons.nape.FlxNapeSpace;
 import flixel.math.FlxAngle;
 import flixel.math.FlxRect;
+import flixel.math.FlxVector;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
+import flixel.util.FlxTimer;
 import nape.geom.Vec2;
 
 class GameState extends FlxState
 {
-	private static final gameWidth:Int = 10000;
-	private static final gameHeight:Int = 10000;
+	private static final gameWidth:Int = 5000;
+	private static final gameHeight:Int = 5000;
 
-	private final starCount:Int = 15000;
+	private final starCount:Int = 10000;
 
-	private final totalPlanets:Int = 40;
-	private final maxSpacingBetweenPlanets:Int = 100;
-	private final minPlanetSize:Int = 40;
-	private final maxPlanetSize:Int = 150;
-	private final breakGravityDistance:Int = 100;
+	private final totalPlanets:Int = 20;
+	private final maxSpacingBetweenPlanets:Int = 250;
+	private final minPlanetSize:Int = 25;
+	private final maxPlanetSize:Int = 55;
+	private final breakGravityDistance:Float = 2.5;
 
-	public static final minZoom:Float = 0.05;
+	public static final minZoom:Float = 0.1;
 	public static final maxZoom:Float = 3.5;
 
 	public static var player:Player;
+	public static var sun:Planet;
+	public static final minRevSpeed:Float = 10000;
+	public static final maxRevSpeed:Float = 20000;
 
 	private var planets:Array<Planet>;
 	private var onPlanet:Map<Int, Array<PlanetObject>>;
-	private var planetIdx:Map<Planet, Int>;
-	private var planetLocations:Array<FlxRect>;
 
 	override public function create()
 	{
 		super.create();
 		FlxG.camera.bgColor = Colors.DARK_GRAY;
 		FlxG.camera.zoom = 0.05;
-		FlxTween.tween(FlxG.camera, {zoom: 3.5}, 5);
+
+		var endZoom = function(_)
+		{
+			player.zooming = false;
+		};
+
+		FlxTween.tween(FlxG.camera, {zoom: 3.5}, 5, {onComplete: endZoom});
 
 		setup();
 		createLevel();
@@ -49,12 +58,12 @@ class GameState extends FlxState
 
 	private function setup()
 	{
-		var stars = new FlxSprite(-gameWidth, -gameHeight);
-		stars.makeGraphic(gameWidth * 2, gameHeight * 2, FlxColor.TRANSPARENT);
+		var stars = new FlxSprite(0, 0);
+		stars.makeGraphic(Std.int(gameWidth * 3), Std.int(gameHeight * 3), FlxColor.TRANSPARENT);
 		for (_ in 0...starCount)
 		{
-			var x = FlxG.random.int(0, gameWidth * 2);
-			var y = FlxG.random.int(0, gameHeight * 2);
+			var x = FlxG.random.int(0, Std.int(gameWidth * 4));
+			var y = FlxG.random.int(0, Std.int(gameHeight * 4));
 
 			var star = new FlxSprite(x, y);
 			var s = FlxG.random.int(1, 4);
@@ -65,8 +74,6 @@ class GameState extends FlxState
 
 		planets = new Array<Planet>();
 		onPlanet = new Map<Int, Array<PlanetObject>>();
-		planetIdx = new Map<Planet, Int>();
-		planetLocations = new Array<FlxRect>();
 
 		for (p in 0...totalPlanets)
 		{
@@ -76,10 +83,17 @@ class GameState extends FlxState
 
 	private function createActors()
 	{
-		var px = planets[1].planet.x + planets[1].planet.width / 2;
-		var py = planets[1].planet.y - planets[1].planet.height;
+		createPlayer(planets[1]);
+	}
 
-		player = new Player(px, py, planets[1]);
+	private function createPlayer(p:Planet)
+	{
+		var px = p.planet.x + p.planet.width / 2;
+		var py = p.planet.y - p.planet.height / 2;
+
+		player = new Player(px, py);
+		player.onPlanet = p;
+		player.zooming = true;
 		add(player);
 		FlxG.camera.follow(player, LOCKON, 0.05);
 
@@ -96,6 +110,7 @@ class GameState extends FlxState
 		FlxNapeSpace.space.gravity = new Vec2(0, 0);
 
 		var cnt:Int = 0;
+		var distanceOut:Int = 0;
 		while (cnt < totalPlanets)
 		{
 			var planetSize = FlxG.random.int(minPlanetSize, maxPlanetSize);
@@ -105,54 +120,26 @@ class GameState extends FlxState
 				planetSize = maxPlanetSize;
 			}
 
-			var planetX = FlxG.random.int(-Std.int(gameWidth / 2), Std.int(gameWidth / 2));
-			var planetY = FlxG.random.int(-Std.int(gameHeight / 2), gameHeight);
-			var planetRect = new FlxRect(planetSize, planetY, planetSize, planetSize);
+			var planetVec = FlxVector.get(gameWidth / 2, gameHeight / 2);
+			planetVec.degrees = FlxG.random.int(0, 360);
+
+			planetVec.length = distanceOut;
+			distanceOut += (planetSize * 3) + FlxG.random.int(Std.int(maxSpacingBetweenPlanets / 2), maxSpacingBetweenPlanets);
+
+			var planet = createPlanet(planetVec.x, planetVec.y, planetSize, FlxG.random.int(60, 120), cnt == 0);
 
 			if (cnt == 0)
-			{
-				planetX = 0;
-				planetY = 0;
-				planetRect = new FlxRect(planetSize, planetY, planetSize, planetSize);
-			}
-			else
-			{
-				while (true)
-				{
-					planetX = FlxG.random.int(-gameWidth, gameWidth);
-					planetY = FlxG.random.int(-gameHeight, gameHeight);
-					planetRect = new FlxRect(planetSize, planetY, planetSize, planetSize);
-
-					var failed = false;
-					for (rect in planetLocations)
-					{
-						if (planetX > rect.x && planetX < rect.x + rect.width && planetY > rect.y && planetY < rect.y + rect.height)
-						{
-							failed = true;
-							break;
-						}
-					}
-
-					if (!failed)
-						break;
-				}
-			}
-
-			planetLocations.push(planetRect);
-
-			var planet = createPlanet(planetX, planetY, planetSize, FlxG.random.int(60, 120), cnt == 0);
-			planet.planet.alive = false;
+				sun = planet;
 
 			cnt += 1;
 		}
 	}
 
-	private function createPlanet(x:Float, y:Float, bodySize:Int, vegCnt:Int, ?blackHole:Bool)
+	private function createPlanet(x:Float, y:Float, bodySize:Int, vegCnt:Int, ?sun:Bool)
 	{
-		var planet = new Planet(x, y, bodySize, vegCnt, blackHole);
+		var planet = new Planet(x, y, bodySize, vegCnt, sun);
 		add(planet);
 		planets.push(planet);
-		planetIdx[planet] = planets.length - 1;
 
 		return planet;
 	}
@@ -161,40 +148,53 @@ class GameState extends FlxState
 	{
 		for (planet in onPlanet.keys())
 		{
+			if (planets[planet].isSun)
+				continue;
+
+			var sunOutVec = FlxVector.get(sun.planet.getMidpoint().x - player.getMidpoint().x, sun.planet.getMidpoint().y - player.getMidpoint().y);
+			sunOutVec.degrees += 90;
+			sunOutVec.length = planets[planet].revSpeed;
+			planets[planet].planet.body.applyImpulse(new Vec2(sunOutVec.x, sunOutVec.y));
+
 			for (obj in onPlanet[planet])
 			{
 				var distance = planets[planet].planet.getMidpoint().distanceTo(obj.getMidpoint());
 
-				if (distance > planets[planet].radius + breakGravityDistance)
+				if (distance > planets[planet].radius * breakGravityDistance)
 				{
-					obj.setOnPlanet(planets[0]);
-					break;
+					obj.onPlanet = null;
+					onPlanet[planet].remove(obj);
+					continue;
 				}
 
-				if (planets[planet].isBlackHole)
+				if (planets[planet].isSun)
 					continue;
 
-				var impulse = 9.8 * planets[planet].planet.body.mass / (distance * distance);
-				var dx = planets[planet].planet.getMidpoint().x - obj.getMidpoint().x;
-				var dy = planets[planet].planet.getMidpoint().y - obj.getMidpoint().y;
+				var gravityVec = FlxVector.get(planets[planet].planet.getMidpoint().x - obj.getMidpoint().x,
+					planets[planet].planet.getMidpoint().y - obj.getMidpoint().y);
 
-				var force:Vec2 = new Vec2(dx * impulse, dy * impulse);
-
-				force.muleq(elapsed);
-				obj.body.applyImpulse(force);
+				gravityVec.length = 98 * planets[planet].planet.body.mass / (distance * distance) * elapsed;
+				obj.body.applyImpulse(new Vec2(gravityVec.x, gravityVec.y));
 
 				var newAngle = FlxAngle.angleBetween(obj, planets[planet].planet, true) - 90;
 				obj.angle = newAngle;
 			}
 		}
 
-		for (planetObj in planets)
+		if (player.onPlanet == null)
 		{
-			var distance = planetObj.planet.getMidpoint().distanceTo(player.getMidpoint());
-			if (distance < planetObj.radius + breakGravityDistance)
+			for (p in 0...totalPlanets)
 			{
-				player.setOnPlanet(planetObj);
-				break;
+				if (planets[p].isSun)
+					continue;
+
+				var distance = planets[p].planet.getMidpoint().distanceTo(player.getMidpoint());
+				if (distance < planets[p].radius * breakGravityDistance)
+				{
+					player.onPlanet = planets[p];
+					onPlanet[p].push(player);
+					break;
+				}
 			}
 		}
 	}
