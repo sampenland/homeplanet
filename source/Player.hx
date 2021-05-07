@@ -62,7 +62,8 @@ class Player extends PlanetObject
 
 		var left = FlxG.keys.anyPressed([A, LEFT]);
 		var right = FlxG.keys.anyPressed([D, RIGHT]);
-		var jump = FlxG.keys.anyJustPressed([UP]);
+		var jump = FlxG.keys.anyJustPressed([UP, W]);
+		var fly = FlxG.keys.anyPressed([SPACE]);
 
 		if (FlxG.keys.anyJustPressed([A, LEFT]))
 		{
@@ -73,7 +74,7 @@ class Player extends PlanetObject
 			flipX = false;
 		}
 
-		if (!left && !right && !jump)
+		if (!left && !right && !jump && !fly)
 		{
 			if (body.velocity.x < 1 && body.velocity.x > -1 || body.velocity.y < 1 && body.velocity.y > -1)
 			{
@@ -97,13 +98,20 @@ class Player extends PlanetObject
 			body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
 		}
 
+		var upVector:FlxVector = getMidpoint().subtractPoint(onPlanet.planet.getMidpoint(FlxPoint.weak()));
+
+		if (fly)
+		{
+			upVector.length = 0.25 * jumpForce;
+			body.applyImpulse(new Vec2(upVector.x, upVector.y));
+		}
+
 		if (jump && canJump)
 		{
 			canJump = false;
 			animation.play("jump");
 			FlxTween.tween(FlxG.camera, {zoom: 3.5}, 0.25, {onComplete: finishJump});
 
-			var upVector:FlxVector = getMidpoint().subtractPoint(onPlanet.planet.getMidpoint(FlxPoint.weak()));
 			upVector.length = 5 * jumpForce;
 			body.applyImpulse(new Vec2(upVector.x, upVector.y));
 		}
