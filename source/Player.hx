@@ -62,8 +62,40 @@ class Player extends PlanetObject
 
 		var left = FlxG.keys.anyPressed([A, LEFT]);
 		var right = FlxG.keys.anyPressed([D, RIGHT]);
-		var jump = FlxG.keys.anyJustPressed([UP, W]);
+		var up = FlxG.keys.anyJustPressed([UP, W]);
 		var fly = FlxG.keys.anyPressed([SPACE]);
+		var down = FlxG.keys.anyPressed([DOWN, S]);
+
+		if (onPlanet.isBlackHole)
+		{
+			var impulseThrustVector = FlxVector.get(1, 1);
+			impulseThrustVector.length = 0.025 * jumpForce;
+
+			if (FlxG.keys.anyPressed([UP, W]))
+			{
+				impulseThrustVector.degrees = -90;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+			else if (left)
+			{
+				impulseThrustVector.degrees = -180;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+			else if (right)
+			{
+				impulseThrustVector.degrees = 0;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+			else if (down)
+			{
+				impulseThrustVector.degrees = -270;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+
+			angle = impulseThrustVector.degrees + 90;
+			impulseThrustVector.put();
+			return;
+		}
 
 		if (FlxG.keys.anyJustPressed([A, LEFT]))
 		{
@@ -74,7 +106,7 @@ class Player extends PlanetObject
 			flipX = false;
 		}
 
-		if (!left && !right && !jump && !fly)
+		if (!left && !right && !up && !fly)
 		{
 			if (body.velocity.x < 1 && body.velocity.x > -1 || body.velocity.y < 1 && body.velocity.y > -1)
 			{
@@ -84,37 +116,58 @@ class Player extends PlanetObject
 			return;
 		}
 
-		if (canJump)
-			animation.play("run");
+		if (!fly)
+		{
+			if (canJump)
+				animation.play("run");
 
-		if (left)
-		{
-			impulseVector.degrees += 90;
-			body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
-		}
-		else if (right)
-		{
-			impulseVector.degrees -= 90;
-			body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
+			if (left)
+			{
+				impulseVector.degrees += 90;
+				body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
+			}
+			else if (right)
+			{
+				impulseVector.degrees -= 90;
+				body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
+			}
 		}
 
 		var upVector:FlxVector = getMidpoint().subtractPoint(onPlanet.planet.getMidpoint(FlxPoint.weak()));
 
 		if (fly)
 		{
+			animation.play("stand");
+			upVector.length = 0.25 * jumpForce;
+
+			if (onPlanet.isBlackHole)
+			{
+				upVector.degrees += 180;
+			}
+
+			body.applyImpulse(new Vec2(upVector.x, upVector.y));
+		}
+
+		if (onPlanet.isBlackHole && up && !fly)
+		{
 			upVector.length = 0.25 * jumpForce;
 			body.applyImpulse(new Vec2(upVector.x, upVector.y));
 		}
 
-		if (jump && canJump)
+		if (!fly)
 		{
-			canJump = false;
-			animation.play("jump");
-			FlxTween.tween(FlxG.camera, {zoom: 3.5}, 0.25, {onComplete: finishJump});
+			if (up && canJump)
+			{
+				canJump = false;
+				animation.play("jump");
+				FlxTween.tween(FlxG.camera, {zoom: 3.5}, 0.25, {onComplete: finishJump});
 
-			upVector.length = 5 * jumpForce;
-			body.applyImpulse(new Vec2(upVector.x, upVector.y));
+				upVector.length = 5 * jumpForce;
+				body.applyImpulse(new Vec2(upVector.x, upVector.y));
+			}
 		}
+
+		upVector.put();
 	}
 
 	private function finishJump(_)
