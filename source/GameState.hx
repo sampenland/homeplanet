@@ -17,10 +17,10 @@ class GameState extends FlxState
 
 	private final starCount:Int = 15000;
 
-	private final totalPlanets:Int = 1;
+	private final totalPlanets:Int = 40;
 	private final maxSpacingBetweenPlanets:Int = 250;
-	private final minPlanetSize:Int = 80;
-	private final maxPlanetSize:Int = 100;
+	private final minPlanetSize:Int = 20;
+	private final maxPlanetSize:Int = 150;
 
 	public static final minZoom:Float = 0.05;
 	public static final maxZoom:Float = 3.5;
@@ -94,23 +94,51 @@ class GameState extends FlxState
 		FlxNapeSpace.space.gravity = new Vec2(0, 0);
 
 		var cnt:Int = 0;
-		var lastX = FlxG.width / 2;
-		var startY = FlxG.height / 2;
 		while (cnt < totalPlanets)
 		{
 			var planetSize = FlxG.random.int(minPlanetSize, maxPlanetSize);
 
-			var rx = lastX + (FlxG.random.int(0, Std.int(FlxG.width / 4)) * (if (FlxG.random.int(0, 10) < 5) 1 else -1));
-			lastX = rx;
+			var planetX = FlxG.random.int(-gameWidth, gameWidth);
+			var planetY = FlxG.random.int(-gameHeight, gameHeight);
+			var planetRect = new FlxRect(planetSize, planetY, planetSize, planetSize);
 
-			var y = (startY - (cnt * (planetSize * 2) + (cnt * FlxG.random.int(120, maxSpacingBetweenPlanets))));
-			var planet = createPlanet(rx, y, planetSize, FlxG.random.int(60, 120));
+			if (cnt == 0)
+			{
+				planetX = 0;
+				planetY = 0;
+				planetRect = new FlxRect(planetSize, planetY, planetSize, planetSize);
+			}
+			else
+			{
+				while (true)
+				{
+					planetX = FlxG.random.int(-gameWidth, gameWidth);
+					planetY = FlxG.random.int(-gameHeight, gameHeight);
+					planetRect = new FlxRect(planetSize, planetY, planetSize, planetSize);
+
+					var failed = false;
+					for (rect in planetLocations)
+					{
+						if (planetX > rect.x && planetX < rect.x + rect.width && planetY > rect.y && planetY < rect.y + rect.height)
+						{
+							failed = true;
+							break;
+						}
+					}
+
+					if (!failed)
+						break;
+				}
+			}
+
+			planetLocations.push(planetRect);
+
+			var planet = createPlanet(planetX, planetY, planetSize, FlxG.random.int(60, 120));
 			planet.planet.alive = false;
 
 			if (cnt == 0)
 			{
 				planet.raiseFlag();
-				planet.planet.alive = true;
 			}
 
 			cnt += 1;
@@ -150,28 +178,26 @@ class GameState extends FlxState
 		}
 	}
 
-	// private function switchPlanets(elapsed:Float)
-	// {
-	// 	var closestPlanet:Planet = null;
-	// 	var minDistance:Float = 99999;
-	// 	for (planet in planets)
-	// 	{
-	// 		var distance = player.getMidpoint().distanceTo(planet.planet.getMidpoint());
-	// 		if (distance < minDistance)
-	// 		{
-	// 			closestPlanet = planet;
-	// 			minDistance = distance;
-	// 		}
-	// 	}
-	// 	if (closestPlanet != null)
-	// 	{
-	// 		player.setOnPlanet(closestPlanet);
-	// 	}
-	// }
+	private function gotoMenu()
+	{
+		FlxG.camera.fade(Colors.DARK_GRAY, 0.33, false, function()
+		{
+			FlxG.switchState(new MenuState());
+		});
+	}
 
 	override public function update(elapsed:Float)
 	{
 		super.update(elapsed);
 		planetGravity(elapsed);
+		keyboardListen(elapsed);
+	}
+
+	private function keyboardListen(elapsed:Float)
+	{
+		if (FlxG.keys.anyJustPressed([ESCAPE]))
+		{
+			gotoMenu();
+		}
 	}
 }
