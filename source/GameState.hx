@@ -5,17 +5,15 @@ import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.addons.nape.FlxNapeSpace;
 import flixel.math.FlxAngle;
-import flixel.math.FlxRect;
 import flixel.math.FlxVector;
 import flixel.tweens.FlxTween;
 import flixel.util.FlxColor;
-import flixel.util.FlxTimer;
 import nape.geom.Vec2;
 
 class GameState extends FlxState
 {
-	private static final gameWidth:Int = 5000;
-	private static final gameHeight:Int = 5000;
+	public static final gameWidth:Int = 5000;
+	public static final gameHeight:Int = 5000;
 
 	private final starCount:Int = 10000;
 
@@ -27,6 +25,7 @@ class GameState extends FlxState
 
 	public static final minZoom:Float = 0.1;
 	public static final maxZoom:Float = 3.5;
+	public static final flyZoom:Float = 1;
 
 	public static var player:Player;
 	public static var sun:Planet;
@@ -50,8 +49,6 @@ class GameState extends FlxState
 		FlxTween.tween(FlxG.camera, {zoom: 3.5}, 5, {onComplete: endZoom});
 
 		setup();
-		createLevel();
-		createActors();
 
 		// FlxNapeSpace.drawDebug = true;
 	}
@@ -59,7 +56,7 @@ class GameState extends FlxState
 	private function setup()
 	{
 		var stars = new FlxSprite(0, 0);
-		stars.makeGraphic(Std.int(gameWidth * 3), Std.int(gameHeight * 3), FlxColor.TRANSPARENT);
+		stars.makeGraphic(gameWidth * 3, gameHeight * 3, FlxColor.TRANSPARENT);
 		for (_ in 0...starCount)
 		{
 			var x = FlxG.random.int(0, Std.int(gameWidth * 4));
@@ -79,6 +76,9 @@ class GameState extends FlxState
 		{
 			onPlanet[p] = new Array<PlanetObject>();
 		}
+
+		createLevel();
+		createActors();
 	}
 
 	private function createActors()

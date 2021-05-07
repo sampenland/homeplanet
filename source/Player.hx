@@ -19,6 +19,7 @@ class Player extends PlanetObject
 	public var zooming:Bool = false;
 
 	private var zoomed:Bool = true;
+	private var flying:Bool = false;
 
 	override public function new(x:Float, y:Float)
 	{
@@ -31,6 +32,7 @@ class Player extends PlanetObject
 		animation.add("stand", [0, 1], 5, true);
 		animation.add("run", [2, 3, 4, 5], 5, true);
 		animation.add("jump", [6, 7, 8, 9, 10, 11, 12, 13, 14, 15], 20, false);
+		animation.add("fly", [16, 17, 18, 19, 20, 21, 22], 20, true);
 		animation.play("stand");
 
 		createCircularBody(8);
@@ -47,7 +49,7 @@ class Player extends PlanetObject
 		kMoveControls(elapsed);
 	}
 
-	private function kMoveControls(elapsed:Float)
+	private function kFlyControls()
 	{
 		var left = FlxG.keys.anyPressed([A, LEFT]);
 		var right = FlxG.keys.anyPressed([D, RIGHT]);
@@ -55,34 +57,94 @@ class Player extends PlanetObject
 		var fly = FlxG.keys.anyPressed([SPACE]);
 		var down = FlxG.keys.anyPressed([DOWN, S]);
 
+		var impulseThrustVector = FlxVector.get(1, 1);
+		impulseThrustVector.length = 0.1 * jumpForce;
+
+		var moving:Bool = false;
+		impulseThrustVector.degrees = -90;
+		if (FlxG.keys.anyPressed([UP, W]))
+		{
+			moving = true;
+			body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+
+			if (left)
+			{
+				moving = true;
+				impulseThrustVector.degrees -= 45;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+
+			if (right)
+			{
+				moving = true;
+				impulseThrustVector.degrees += 45;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+		}
+		else if (down)
+		{
+			moving = true;
+			impulseThrustVector.degrees -= 180;
+			body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+
+			if (left)
+			{
+				moving = true;
+				impulseThrustVector.degrees += 45;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+
+			if (right)
+			{
+				moving = true;
+				impulseThrustVector.degrees -= 45;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+		}
+		else
+		{
+			if (left)
+			{
+				moving = true;
+				impulseThrustVector.degrees -= 45;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+
+			if (right)
+			{
+				moving = true;
+				impulseThrustVector.degrees += 45;
+				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
+			}
+		}
+
+		if (!moving)
+		{
+			impulseThrustVector.degrees = -90;
+			animation.play("stand");
+			angle = 0;
+		}
+		else
+		{
+			animation.play("fly");
+			angle = impulseThrustVector.degrees + 90;
+		}
+
+		impulseThrustVector.put();
+	}
+
+	private function kMoveControls(elapsed:Float)
+	{
+		var left = FlxG.keys.anyPressed([A, LEFT]);
+		var right = FlxG.keys.anyPressed([D, RIGHT]);
+		var up = FlxG.keys.anyJustPressed([UP, W]);
+		var fly = FlxG.keys.anyPressed([SPACE]);
+
+		flying = onPlanet == null;
+
 		if (onPlanet == null)
 		{
-			var impulseThrustVector = FlxVector.get(1, 1);
-			impulseThrustVector.length = 0.025 * jumpForce;
-
-			if (FlxG.keys.anyPressed([UP, W]))
-			{
-				impulseThrustVector.degrees = -90;
-				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
-			}
-			else if (left)
-			{
-				impulseThrustVector.degrees = -180;
-				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
-			}
-			else if (right)
-			{
-				impulseThrustVector.degrees = 0;
-				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
-			}
-			else if (down)
-			{
-				impulseThrustVector.degrees = -270;
-				body.applyImpulse(new Vec2(impulseThrustVector.x, impulseThrustVector.y));
-			}
-
-			angle = impulseThrustVector.degrees + 90;
-			impulseThrustVector.put();
+			kFlyControls();
 			return;
 		}
 
@@ -130,7 +192,7 @@ class Player extends PlanetObject
 
 		if (fly)
 		{
-			animation.play("stand");
+			animation.play("fly");
 			upVector.length = 0.25 * jumpForce;
 			body.applyImpulse(new Vec2(upVector.x, upVector.y));
 		}
@@ -170,6 +232,25 @@ class Player extends PlanetObject
 	{
 		if (zooming)
 			return;
+
+		if (flying)
+		{
+			if (flying && FlxG.camera.zoom != GameState.flyZoom)
+			{
+				zooming = true;
+				FlxTween.tween(FlxG.camera, {zoom: GameState.flyZoom}, 1, {onComplete: resetZoom});
+			}
+
+			return;
+		}
+		else
+		{
+			if (FlxG.camera.zoom == GameState.flyZoom)
+			{
+				zooming = true;
+				FlxTween.tween(FlxG.camera, {zoom: GameState.maxZoom}, 1, {onComplete: resetZoom});
+			}
+		}
 
 		if (FlxG.keys.anyJustPressed([Z]))
 		{
