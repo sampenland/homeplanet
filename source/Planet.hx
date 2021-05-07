@@ -1,20 +1,20 @@
 package;
 
+import flixel.FlxG;
 import flixel.FlxSprite;
 import flixel.addons.nape.FlxNapeSprite;
 import flixel.group.FlxGroup.FlxTypedGroup;
+import flixel.math.FlxVector;
 import nape.phys.BodyType;
 
 class Planet extends FlxTypedGroup<FlxSprite>
 {
-	public var radius:Int;
-
 	public var planet:FlxNapeSprite;
 	public var planetDisplay:FlxSprite;
 
 	private var planetFlag:FlxSprite;
 
-	override public function new(x:Float, y:Float, bodySize:Int)
+	override public function new(x:Float, y:Float, bodySize:Int, vegCnt:Int)
 	{
 		super();
 
@@ -31,7 +31,6 @@ class Planet extends FlxTypedGroup<FlxSprite>
 
 		planetDisplay = new FlxSprite();
 		planetDisplay.loadGraphic(AssetPaths.planet__png, false, 100, 100);
-		add(planetDisplay);
 
 		planet = new FlxNapeSprite(x, y);
 		planet.loadGraphicFromSprite(planetDisplay);
@@ -42,7 +41,24 @@ class Planet extends FlxTypedGroup<FlxSprite>
 		planet.body.mass = Std.int(10e5);
 		add(planet);
 
-		radius = bodySize;
+		for (_ in 0...vegCnt)
+		{
+			var bush = new FlxSprite();
+			bush.loadGraphic(AssetPaths.bush__png, true, 12, 12);
+			add(bush);
+
+			bush.animation.add("idle", [0, 1], 3, true);
+			bush.animation.play("idle");
+
+			var v = FlxVector.get(1, 1);
+			v.degrees = FlxG.random.float(0, 359);
+			bush.angle = v.degrees + 90;
+			v.length = bodySize + bush.width - 2;
+
+			bush.x = x - bush.width / 2 + v.x;
+			bush.y = y - bush.height / 2 + v.y;
+			v.put();
+		}
 	}
 
 	public function raiseFlag()

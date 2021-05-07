@@ -5,13 +5,19 @@ import flixel.FlxSprite;
 import flixel.FlxState;
 import flixel.addons.nape.FlxNapeSpace;
 import flixel.math.FlxAngle;
+import flixel.math.FlxRect;
 import flixel.tweens.FlxTween;
+import flixel.util.FlxColor;
 import nape.geom.Vec2;
-import nape.phys.BodyType;
 
 class GameState extends FlxState
 {
-	private final totalPlanets:Int = 30;
+	private static final gameWidth:Int = 10000;
+	private static final gameHeight:Int = 10000;
+
+	private final starCount:Int = 15000;
+
+	private final totalPlanets:Int = 1;
 	private final maxSpacingBetweenPlanets:Int = 250;
 	private final minPlanetSize:Int = 80;
 	private final maxPlanetSize:Int = 100;
@@ -24,6 +30,7 @@ class GameState extends FlxState
 	private var planets:Array<Planet>;
 	private var onPlanet:Map<Int, Array<PlanetObject>>;
 	private var planetIdx:Map<Planet, Int>;
+	private var planetLocations:Array<FlxRect>;
 
 	override public function create()
 	{
@@ -41,9 +48,24 @@ class GameState extends FlxState
 
 	private function setup()
 	{
+		var stars = new FlxSprite(-gameWidth / 2, -gameHeight / 2);
+		stars.makeGraphic(gameWidth * 2, gameHeight * 2, FlxColor.TRANSPARENT);
+		for (_ in 0...starCount)
+		{
+			var x = FlxG.random.int(0, gameWidth);
+			var y = FlxG.random.int(0, gameHeight);
+
+			var star = new FlxSprite(x, y);
+			var s = FlxG.random.int(1, 4);
+			star.makeGraphic(s, s, Colors.WHITE);
+			stars.stamp(star, x, y);
+		}
+		add(stars);
+
 		planets = new Array<Planet>();
 		onPlanet = new Map<Int, Array<PlanetObject>>();
 		planetIdx = new Map<Planet, Int>();
+		planetLocations = new Array<FlxRect>();
 
 		for (p in 0...totalPlanets)
 		{
@@ -82,9 +104,8 @@ class GameState extends FlxState
 			lastX = rx;
 
 			var y = (startY - (cnt * (planetSize * 2) + (cnt * FlxG.random.int(120, maxSpacingBetweenPlanets))));
-			var planet = createPlanet(rx, y, planetSize);
+			var planet = createPlanet(rx, y, planetSize, FlxG.random.int(60, 120));
 			planet.planet.alive = false;
-			createPlanetVeg(planet, FlxG.random.int(100, 200));
 
 			if (cnt == 0)
 			{
@@ -96,18 +117,9 @@ class GameState extends FlxState
 		}
 	}
 
-	private function createPlanetVeg(planet:Planet, vegCount:Int)
+	private function createPlanet(x:Float, y:Float, bodySize:Int, vegCnt:Int)
 	{
-		for (_ in 0...vegCount)
-		{
-			var bush = new Bush(planet);
-			add(bush);
-		}
-	}
-
-	private function createPlanet(x:Float, y:Float, bodySize:Int)
-	{
-		var planet = new Planet(x, y, bodySize);
+		var planet = new Planet(x, y, bodySize, vegCnt);
 		add(planet);
 		planets.push(planet);
 		planetIdx[planet] = planets.length - 1;
@@ -138,25 +150,24 @@ class GameState extends FlxState
 		}
 	}
 
-	private function switchPlanets(elapsed:Float)
-	{
-		var closestPlanet:Planet = null;
-		var minDistance:Float = 99999;
-		for (planet in planets)
-		{
-			var distance = player.getMidpoint().distanceTo(planet.planet.getMidpoint());
-			if (distance < minDistance)
-			{
-				closestPlanet = planet;
-				minDistance = distance;
-			}
-		}
-
-		if (closestPlanet != null)
-		{
-			player.setOnPlanet(closestPlanet);
-		}
-	}
+	// private function switchPlanets(elapsed:Float)
+	// {
+	// 	var closestPlanet:Planet = null;
+	// 	var minDistance:Float = 99999;
+	// 	for (planet in planets)
+	// 	{
+	// 		var distance = player.getMidpoint().distanceTo(planet.planet.getMidpoint());
+	// 		if (distance < minDistance)
+	// 		{
+	// 			closestPlanet = planet;
+	// 			minDistance = distance;
+	// 		}
+	// 	}
+	// 	if (closestPlanet != null)
+	// 	{
+	// 		player.setOnPlanet(closestPlanet);
+	// 	}
+	// }
 
 	override public function update(elapsed:Float)
 	{
