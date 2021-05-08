@@ -173,18 +173,17 @@ class Player extends PlanetObject
 
 		if (!fly)
 		{
-			if (canJump)
-				animation.play("run");
-
 			if (left)
 			{
 				impulseVector.degrees += 90;
 				body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
+				animation.play("run");
 			}
 			else if (right)
 			{
 				impulseVector.degrees -= 90;
 				body.applyImpulse(new Vec2(impulseVector.x, impulseVector.y));
+				animation.play("run");
 			}
 		}
 
@@ -193,7 +192,7 @@ class Player extends PlanetObject
 		if (fly)
 		{
 			animation.play("fly");
-			upVector.length = 0.25 * jumpForce;
+			upVector.length = (onPlanet.planet.mass * 0.4) * jumpForce;
 			body.applyImpulse(new Vec2(upVector.x, upVector.y));
 		}
 
@@ -205,7 +204,7 @@ class Player extends PlanetObject
 				animation.play("jump");
 				FlxTween.tween(FlxG.camera, {zoom: 3.5}, 0.25, {onComplete: finishJump});
 
-				upVector.length = (onPlanet.planet.mass * 2.25) * jumpForce;
+				upVector.length = (onPlanet.planet.mass * 2) * jumpForce;
 				body.applyImpulse(new Vec2(upVector.x, upVector.y));
 			}
 		}

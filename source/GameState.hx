@@ -15,12 +15,12 @@ class GameState extends FlxState
 	public static final gameWidth:Int = 5000;
 	public static final gameHeight:Int = 5000;
 
-	private final starCount:Int = 10000;
+	private final starCount:Int = 20000;
 
 	private final totalPlanets:Int = 20;
-	private final maxSpacingBetweenPlanets:Int = 250;
-	private final minPlanetSize:Int = 25;
-	private final maxPlanetSize:Int = 55;
+	private final maxSpacingBetweenPlanets:Int = 25;
+	private final minPlanetSize:Int = 60;
+	private final maxPlanetSize:Int = 160;
 	private final breakGravityDistance:Float = 2.5;
 
 	public static final minZoom:Float = 0.1;
@@ -55,7 +55,7 @@ class GameState extends FlxState
 
 	private function setup()
 	{
-		var stars = new FlxSprite(0, 0);
+		var stars = new FlxSprite(-gameWidth, -gameHeight);
 		stars.makeGraphic(gameWidth * 3, gameHeight * 3, FlxColor.TRANSPARENT);
 		for (_ in 0...starCount)
 		{
@@ -173,7 +173,7 @@ class GameState extends FlxState
 				var gravityVec = FlxVector.get(planets[planet].planet.getMidpoint().x - obj.getMidpoint().x,
 					planets[planet].planet.getMidpoint().y - obj.getMidpoint().y);
 
-				gravityVec.length = 98 * planets[planet].planet.body.mass / (distance * distance) * elapsed;
+				gravityVec.length = 980 * planets[planet].planet.body.mass / (distance * distance) * elapsed;
 				obj.body.applyImpulse(new Vec2(gravityVec.x, gravityVec.y));
 
 				var newAngle = FlxAngle.angleBetween(obj, planets[planet].planet, true) - 90;
